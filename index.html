@@ -585,7 +585,7 @@
     </div>
 
     <script>
-// Configurações do jogo
+ // Configurações do jogo
 const config = {
     wordLength: 5,
     maxAttempts: 6,
@@ -637,25 +637,36 @@ let stats = {
 // Carrega o dicionário de palavras válidas
 async function loadDictionary() {
     try {
-        // Carrega um dicionário de palavras portuguesas
+        // Carrega do repositório específico
         const response = await fetch('https://raw.githubusercontent.com/pythonprobr/palavras/master/palavras.txt');
-        const words = await response.text();
         
-        // Processa as palavras e adiciona ao dicionário
-        words.split('\n').forEach(word => {
-            const cleanWord = word.trim().toUpperCase();
-            if (cleanWord.length >= 4 && cleanWord.length <= 6) {
-                dictionary.add(cleanWord);
-            }
-        });
+        if (!response.ok) {
+            throw new Error('Falha ao carregar o dicionário');
+        }
         
-        console.log('Dicionário carregado com', dictionary.size, 'palavras');
-    } catch (error) {
-        console.error('Erro ao carregar dicionário:', error);
-        // Fallback: usa as listas de target como dicionário
+        const text = await response.text();
+        const words = text.split('\n')
+            .map(word => word.trim().toUpperCase())
+            .filter(word => word.length >= 4 && word.length <= 6);
+        
+        words.forEach(word => dictionary.add(word));
+        
+        console.log('Dicionário carregado com', dictionary.size, 'palavras válidas');
+        
+        // Adiciona as palavras-alvo como fallback
         Object.values(targetWordLists).flat().forEach(word => {
             dictionary.add(word.toUpperCase());
         });
+        
+    } catch (error) {
+        console.error('Erro ao carregar dicionário:', error);
+        
+        // Fallback: usa apenas as palavras-alvo
+        Object.values(targetWordLists).flat().forEach(word => {
+            dictionary.add(word.toUpperCase());
+        });
+        
+        console.log('Usando fallback com', dictionary.size, 'palavras');
     }
 }
 
@@ -991,7 +1002,7 @@ function checkGuess(isUserAction = true) {
         return false;
     }
     
-    const guess = config.currentGuess.join('');
+    const guess = config.currentGuess.join('').toUpperCase();
     
     if (isUserAction && !isValidWord(guess)) {
         showMessage('Palavra não reconhecida!', 'error');
