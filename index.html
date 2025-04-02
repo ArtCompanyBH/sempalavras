@@ -638,7 +638,7 @@ let stats = {
 async function loadDictionary() {
     try {
         // Carrega um dicionário de palavras portuguesas
-        const response = await fetch('https://raw.githubusercontent.com/davidsonmarciano/wordlist-portuguese-brazilian/master/wordlist.txt');
+        const response = await fetch('https://raw.githubusercontent.com/pythonprobr/palavras/master/palavras.txt');
         const words = await response.text();
         
         // Processa as palavras e adiciona ao dicionário
