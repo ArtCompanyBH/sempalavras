@@ -585,656 +585,696 @@
     </div>
 
     <script>
-        // Configurações do jogo
-const config = {
-    wordLength: 5,
-    maxAttempts: 6,
-    currentAttempt: 0,
-    currentGuess: [],
-    targetWord: '',
-    gameOver: false,
-    keyboardState: {}
-};
+ // Configurações do jogo
+        const config = {
+            wordLength: 5,
+            maxAttempts: 6,
+            currentAttempt: 0,
+            currentGuess: [],
+            targetWord: '',
+            gameOver: false,
+            keyboardState: {}
+        };
 
-// Listas de palavras por tamanho (todas em maiúsculas)
-const wordLists = {
-    4: ['ACAO', 'ATOS', 'AUTO', 'BENS', 'JUIZ', 'VARA', 'SELO', 'RITO', 'FATO', 'TIPO', 'NOME', 'DOCS', 'COTA', 'DANO', 'FORO', 'JURO', 'LEIS', 'NOTA', 'PENA', 'REUS', 'VETO', 'VOTO', 'ATAS', 'DADO', 'DATA', 'FITA', 'GUIA', 'ITEM', 'ROLO', 'TOMO', 'BASE', 'FILA', 'FIXO', 'LOTE', 'META', 'REDE', 'TETO', 'TIME', 'TURNO'],
-    5: ['ACORDO', 'AUTOS', 'CERTA', 'COPIA', 'CRIME', 'EDITA', 'EXAME', 'FICHA', 'FOLHA', 'FUNDO', 'JULGA', 'JURIS', 'LAUDO', 'LIVRO', 'MEDIA', 'ORDEM', 'PAPEL', 'PASTA', 'PRAZO', 'PROVA', 'SEARA', 'SECAO', 'TERMO', 'TESTE', 'TOMBO', 'VISTA'],
-    6: ['AUTUAR', 'CITADO', 'HABEAS', 'LAUDAR', 'RECEBE', 'REUSOS', 'DECIDA', 'VISTAS', 'INTIMA', 'JULGAR', 'APELAR', 'DENEGA', 'EMENDA', 'EXCETO', 'FORMAR', 'OITIVA', 'PEDIDO', 'REVISA', 'SUSTADO', 'TUTELA', 'VOTADO', 'VENCER', 'TOMBAR', 'FOLHAS', 'NUMERA', 'SELAR', 'DIGITA', 'MICROS', 'VERSÃO', 'CAIXAS', 'CODIGO', 'DOSSIE', 'FICHAR', 'GUARDA', 'LACRAR', 'LIVROS', 'MAPEAR', 'ORIGEM', 'PASTAR', 'SINAIS', 'CIENTE', 'DIARIA', 'EDITAL', 'FISCAL', 'LICITA', 'OFICIO', 'PORTAR', 'RELATO', 'AVALIA', 'CIENTE', 'FATURA', 'FILTRO', 'FORMAL', 'GESTAO', 'AVOCAR', 'INDEXA', 'MANUAL', 'NORMAS', 'PLANOS', 'REGIME', 'RENOVA', 'TAREFA', 'TERMOS', 'UNIDOS', 'VISTOS']
-};
+        // Listas de palavras por tamanho (todas em maiúsculas)
+        const wordLists = {
+            4: ['ACAO', 'ATOS', 'AUTO', 'BENS', 'JUIZ', 'VARA', 'SELO', 'RITO', 'FATO', 'TIPO', 'NOME', 'DOCS', 'COTA', 'DANO', 'FORO', 'JURO', 'LEIS', 'NOTA', 'PENA', 'REUS', 'VETO', 'VOTO', 'ATAS', 'DADO', 'DATA', 'FITA', 'GUIA', 'ITEM', 'ROLO', 'TOMO', 'BASE', 'FILA', 'FIXO', 'LOTE', 'META', 'REDE', 'TETO', 'TIME', 'TURNO'],
+            5: ['ACORDO', 'AUTOS', 'CERTA', 'COPIA', 'CRIME', 'EDITA', 'EXAME', 'FICHA', 'FOLHA', 'FUNDO', 'JULGA', 'JURIS', 'LAUDO', 'LIVRO', 'MEDIA', 'ORDEM', 'PAPEL', 'PASTA', 'PRAZO', 'PROVA', 'SEARA', 'SECAO', 'TERMO', 'TESTE', 'TOMBO', 'VISTA'],
+            6: ['AUTUAR', 'CITADO', 'HABEAS', 'LAUDAR', 'RECEBE', 'REUSOS', 'DECIDA', 'VISTAS', 'INTIMA', 'JULGAR', 'APELAR', 'DENEGA', 'EMENDA', 'EXCETO', 'FORMAR', 'OITIVA', 'PEDIDO', 'REVISA', 'SUSTADO', 'TUTELA', 'VOTADO', 'VENCER', 'TOMBAR', 'FOLHAS', 'NUMERA', 'DIGITA', 'MICROS', 'VERSÃO', 'CAIXAS', 'CODIGO', 'DOSSIE', 'FICHAR', 'GUARDA', 'LACRAR', 'LIVROS', 'MAPEAR', 'ORIGEM', 'PASTAR', 'SINAIS', 'CIENTE', 'DIARIA', 'EDITAL', 'FISCAL', 'LICITA', 'OFICIO', 'PORTAR', 'RELATO', 'AVALIA', 'CIENTE', 'FATURA', 'FILTRO', 'FORMAL', 'GESTAO', 'AVOCAR', 'INDEXA', 'MANUAL', 'NORMAS', 'PLANOS', 'REGIME', 'RENOVA', 'TAREFA', 'TERMOS', 'UNIDOS', 'VISTOS']
+        };
 
-// Elementos DOM
-const board = document.getElementById('board');
-const message = document.getElementById('message');
-const dailyInfo = document.getElementById('dailyInfo');
-const wordLengthSelect = document.getElementById('wordLength');
-const keys = document.querySelectorAll('.key');
-const countdown = document.getElementById('countdown');
-const statsBtn = document.getElementById('statsBtn');
-const statsPanel = document.getElementById('statsPanel');
-const closeStatsBtn = document.getElementById('closeStatsBtn');
-const shareStatsBtn = document.getElementById('shareStatsBtn');
-const gamesPlayedEl = document.getElementById('gamesPlayed');
-const winPercentageEl = document.getElementById('winPercentage');
-const currentStreakEl = document.getElementById('currentStreak');
-const maxStreakEl = document.getElementById('maxStreak');
-const historyBars = document.getElementById('historyBars');
+        // Verificação de palavras com tamanho incorreto
+        (function validateWordLists() {
+            for (const length in wordLists) {
+                wordLists[length] = wordLists[length].filter(word => {
+                    const isValid = word.length === parseInt(length);
+                    if (!isValid) {
+                        console.warn(`Removendo palavra com tamanho incorreto: ${word} (tamanho ${word.length}, esperado ${length})`);
+                    }
+                    return isValid;
+                });
+            }
+        })();
 
-// Variáveis de controle
-const ADMIN_PASSWORD = "Gushi150#";
-let stats = {
-    gamesPlayed: 0,
-    gamesWon: 0,
-    currentStreak: 0,
-    maxStreak: 0,
-    guessDistribution: [0, 0, 0, 0, 0, 0],
-    lastPlayed: null
-};
+        // Elementos DOM
+        const board = document.getElementById('board');
+        const message = document.getElementById('message');
+        const dailyInfo = document.getElementById('dailyInfo');
+        const wordLengthSelect = document.getElementById('wordLength');
+        const keys = document.querySelectorAll('.key');
+        const countdown = document.getElementById('countdown');
+        const statsBtn = document.getElementById('statsBtn');
+        const statsPanel = document.getElementById('statsPanel');
+        const closeStatsBtn = document.getElementById('closeStatsBtn');
+        const shareStatsBtn = document.getElementById('shareStatsBtn');
+        const gamesPlayedEl = document.getElementById('gamesPlayed');
+        const winPercentageEl = document.getElementById('winPercentage');
+        const currentStreakEl = document.getElementById('currentStreak');
+        const maxStreakEl = document.getElementById('maxStreak');
+        const historyBars = document.getElementById('historyBars');
 
-// Função para gerar uma palavra baseada na data (garante a mesma palavra para todos no mesmo dia)
-function getDailyWord() {
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-    
-    // Usamos um hash simples da data para selecionar a palavra
-    let hash = 0;
-    for (let i = 0; i < dateStr.length; i++) {
-        hash = (hash << 5) - hash + dateStr.charCodeAt(i);
-        hash |= 0; // Converte para 32bit integer
-    }
-    
-    // Seleciona a palavra baseada no hash
-    const wordList = wordLists[config.wordLength];
-    const index = Math.abs(hash) % wordList.length;
-    
-    return wordList[index];
-}
+        // Variáveis de controle
+        const ADMIN_PASSWORD = "Gushi150#";
+        let stats = {
+            gamesPlayed: 0,
+            gamesWon: 0,
+            currentStreak: 0,
+            maxStreak: 0,
+            guessDistribution: [0, 0, 0, 0, 0, 0],
+            lastPlayed: null
+        };
 
-// Inicializa estatísticas
-function initStats() {
-    const savedStats = localStorage.getItem('wordleStats');
-    if (savedStats) {
-        try {
-            stats = JSON.parse(savedStats);
-            // Garante que todas as propriedades existam
-            stats.gamesPlayed = stats.gamesPlayed || 0;
-            stats.gamesWon = stats.gamesWon || 0;
-            stats.currentStreak = stats.currentStreak || 0;
-            stats.maxStreak = stats.maxStreak || 0;
-            stats.guessDistribution = stats.guessDistribution || [0, 0, 0, 0, 0, 0];
-            stats.lastPlayed = stats.lastPlayed || null;
-        } catch (e) {
-            console.error('Erro ao carregar estatísticas:', e);
-            resetStats();
+        // Função para gerar uma palavra baseada na data (garante a mesma palavra para todos no mesmo dia)
+        function getDailyWord() {
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+            
+            // Usamos um hash simples da data para selecionar a palavra
+            let hash = 0;
+            for (let i = 0; i < dateStr.length; i++) {
+                hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+                hash |= 0; // Converte para 32bit integer
+            }
+            
+            // Seleciona a palavra baseada no hash
+            const wordList = wordLists[config.wordLength];
+            const index = Math.abs(hash) % wordList.length;
+            
+            return wordList[index];
         }
-    }
-}
 
-// Reseta estatísticas
-function resetStats() {
-    stats = {
-        gamesPlayed: 0,
-        gamesWon: 0,
-        currentStreak: 0,
-        maxStreak: 0,
-        guessDistribution: [0, 0, 0, 0, 0, 0],
-        lastPlayed: null
-    };
-    localStorage.setItem('wordleStats', JSON.stringify(stats));
-}
-
-// Atualiza estatísticas
-function updateStats(win, attempts) {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Verifica se já jogou hoje
-    if (stats.lastPlayed === today) return;
-    
-    stats.gamesPlayed++;
-    
-    if (win) {
-        stats.gamesWon++;
-        stats.currentStreak++;
-        if (stats.currentStreak > stats.maxStreak) {
-            stats.maxStreak = stats.currentStreak;
+        // Inicializa estatísticas
+        function initStats() {
+            const savedStats = localStorage.getItem('wordleStats');
+            if (savedStats) {
+                try {
+                    stats = JSON.parse(savedStats);
+                    // Garante que todas as propriedades existam
+                    stats.gamesPlayed = stats.gamesPlayed || 0;
+                    stats.gamesWon = stats.gamesWon || 0;
+                    stats.currentStreak = stats.currentStreak || 0;
+                    stats.maxStreak = stats.maxStreak || 0;
+                    stats.guessDistribution = stats.guessDistribution || [0, 0, 0, 0, 0, 0];
+                    stats.lastPlayed = stats.lastPlayed || null;
+                } catch (e) {
+                    console.error('Erro ao carregar estatísticas:', e);
+                    resetStats();
+                }
+            }
         }
-        
-        // Atualiza distribuição de tentativas
-        if (attempts >= 1 && attempts <= 6) {
-            stats.gguessDistribution[attempts - 1]++;
+
+        // Reseta estatísticas
+        function resetStats() {
+            stats = {
+                gamesPlayed: 0,
+                gamesWon: 0,
+                currentStreak: 0,
+                maxStreak: 0,
+                guessDistribution: [0, 0, 0, 0, 0, 0],
+                lastPlayed: null
+            };
+            localStorage.setItem('wordleStats', JSON.stringify(stats));
         }
-    } else {
-        stats.currentStreak = 0;
-    }
-    
-    stats.lastPlayed = today;
-    localStorage.setItem('wordleStats', JSON.stringify(stats));
-    updateStatsDisplay();
-}
 
-// Mostra estatísticas
-function updateStatsDisplay() {
-    gamesPlayedEl.textContent = stats.gamesPlayed;
-    winPercentageEl.textContent = stats.gamesPlayed > 0 
-        ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) + '%' 
-        : '0%';
-    currentStreakEl.textContent = stats.currentStreak;
-    maxStreakEl.textContent = stats.maxStreak;
-    
-    // Atualiza gráfico de distribuição
-    historyBars.innerHTML = '';
-    const maxValue = Math.max(...stats.guessDistribution, 1);
-    
-    for (let i = 0; i < 6; i++) {
-        const bar = document.createElement('div');
-        bar.className = 'history-bar';
-        const height = stats.guessDistribution[i] / maxValue * 80;
-        bar.style.height = `${height}px`;
-        
-        const label = document.createElement('div');
-        label.className = 'history-bar-label';
-        label.textContent = (i + 1).toString();
-        
-        const value = document.createElement('div');
-        value.style.position = 'absolute';
-        value.style.top = '-20px';
-        value.style.width = '100%';
-        value.style.textAlign = 'center';
-        value.style.fontSize = '0.7rem';
-        value.textContent = stats.guessDistribution[i];
-        
-        bar.appendChild(value);
-        bar.appendChild(label);
-        historyBars.appendChild(bar);
-    }
-}
-
-// Verifica se é um novo dia
-function isNewDay() {
-    const today = new Date().toDateString();
-    const storedDay = localStorage.getItem('wordleDay');
-    return storedDay !== today;
-}
-
-// Verifica se a palavra existe no dicionário
-function isValidWord(word) {
-    return wordLists[config.wordLength].includes(word);
-}
-
-// Inicializa o jogo
-function initGame() {
-    // Verifica se é um novo dia
-    const today = new Date().toDateString();
-    if (isNewDay()) {
-        localStorage.setItem('wordleDay', today);
-        localStorage.removeItem('wordleProgress');
-    }
-    
-    // Carrega o progresso salvo
-    const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
-    
-    // Verifica se o tamanho atual já foi jogado
-    if (progress[config.wordLength]?.gameOver) {
-        config.gameOver = true;
-        showMessage(`Você já completou o jogo de ${config.wordLength} letras hoje!`, 'error');
-        disableKeyboard();
-        updateCountdown();
-        return;
-    }
-    
-    // Configura o jogo
-    config.targetWord = getDailyWord();
-    config.currentAttempt = 0;
-    config.currentGuess = [];
-    config.gameOver = false;
-    config.keyboardState = {};
-    
-    // Atualiza CSS vars para o tabuleiro
-    document.documentElement.style.setProperty('--rows', config.maxAttempts);
-    document.documentElement.style.setProperty('--cols', config.wordLength);
-    
-    // Atualiza a informação do dia
-    dailyInfo.textContent = `Palavra do dia (${config.wordLength} letras) - ${formatDate(new Date())}`;
-    
-    // Limpa o tabuleiro
-    board.innerHTML = '';
-    
-    // Cria as células do tabuleiro
-    for (let i = 0; i < config.maxAttempts; i++) {
-        const row = document.createElement('div');
-        row.className = 'row';
-        
-        for (let j = 0; j < config.wordLength; j++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.row = i;
-            cell.dataset.col = j;
-            row.appendChild(cell);
-        }
-        
-        board.appendChild(row);
-    }
-    
-    // Carrega o progresso existente
-    if (progress[config.wordLength]) {
-        const saved = progress[config.wordLength];
-        config.currentAttempt = saved.attempts?.length || 0;
-        config.keyboardState = saved.keyboardState || {};
-        config.gameOver = saved.gameOver || false;
-        
-        // Preenche tentativas anteriores
-        if (saved.attempts) {
-            for (let i = 0; i < saved.attempts.length; i++) {
-                const row = board.children[i];
-                const word = saved.attempts[i];
-                
-                for (let j = 0; j < config.wordLength; j++) {
-                    const cell = row.children[j];
-                    cell.textContent = word[j] || '';
-                    cell.classList.add('filled');
+        // Atualiza estatísticas
+        function updateStats(win, attempts) {
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Verifica se já jogou hoje
+            if (stats.lastPlayed === today) return;
+            
+            stats.gamesPlayed++;
+            
+            if (win) {
+                stats.gamesWon++;
+                stats.currentStreak++;
+                if (stats.currentStreak > stats.maxStreak) {
+                    stats.maxStreak = stats.currentStreak;
                 }
                 
-                // Simula a verificação da palavra
-                simulateWordCheck(i, word);
+                // Atualiza distribuição de tentativas
+                if (attempts >= 1 && attempts <= 6) {
+                    stats.guessDistribution[attempts - 1]++;
+                }
+            } else {
+                stats.currentStreak = 0;
+            }
+            
+            stats.lastPlayed = today;
+            localStorage.setItem('wordleStats', JSON.stringify(stats));
+            updateStatsDisplay();
+        }
+
+        // Mostra estatísticas
+        function updateStatsDisplay() {
+            gamesPlayedEl.textContent = stats.gamesPlayed;
+            winPercentageEl.textContent = stats.gamesPlayed > 0 
+                ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) + '%' 
+                : '0%';
+            currentStreakEl.textContent = stats.currentStreak;
+            maxStreakEl.textContent = stats.maxStreak;
+            
+            // Atualiza gráfico de distribuição
+            historyBars.innerHTML = '';
+            const maxValue = Math.max(...stats.guessDistribution, 1);
+            
+            for (let i = 0; i < 6; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'history-bar';
+                const height = stats.guessDistribution[i] / maxValue * 80;
+                bar.style.height = `${height}px`;
+                
+                const label = document.createElement('div');
+                label.className = 'history-bar-label';
+                label.textContent = (i + 1).toString();
+                
+                const value = document.createElement('div');
+                value.style.position = 'absolute';
+                value.style.top = '-20px';
+                value.style.width = '100%';
+                value.style.textAlign = 'center';
+                value.style.fontSize = '0.7rem';
+                value.textContent = stats.guessDistribution[i];
+                
+                bar.appendChild(value);
+                bar.appendChild(label);
+                historyBars.appendChild(bar);
             }
         }
-        
-        if (config.gameOver) {
-            disableKeyboard();
-            updateCountdown();
-        }
-    }
-    
-    updateBoard();
-    updateKeyboard();
-}
 
-// Simula a verificação de uma palavra (para carregar estado salvo)
-function simulateWordCheck(rowIndex, word) {
-    const row = board.children[rowIndex];
-    const targetLetters = config.targetWord.split('');
-    const guessLetters = word.split('');
-    
-    // Verifica letras corretas
-    for (let i = 0; i < config.wordLength; i++) {
-        if (guessLetters[i] === targetLetters[i]) {
-            row.children[i].classList.add('correct');
-            targetLetters[i] = null;
-            guessLetters[i] = null;
-            config.keyboardState[word[i]] = 'correct';
+        // Verifica se é um novo dia
+        function isNewDay() {
+            const today = new Date().toDateString();
+            const storedDay = localStorage.getItem('wordleDay');
+            return storedDay !== today;
         }
-    }
-    
-    // Verifica letras presentes
-    for (let i = 0; i < config.wordLength; i++) {
-        if (guessLetters[i] === null) continue;
-        
-        const index = targetLetters.indexOf(guessLetters[i]);
-        if (index !== -1) {
-            row.children[i].classList.add('present');
-            targetLetters[index] = null;
-            if (config.keyboardState[word[i]] !== 'correct') {
-                config.keyboardState[word[i]] = 'present';
+
+        // Verifica se a palavra existe no dicionário
+        function isValidWord(word) {
+            return wordLists[config.wordLength].includes(word);
+        }
+
+        // Inicializa o jogo
+        function initGame() {
+            // Verifica se é um novo dia
+            const today = new Date().toDateString();
+            if (isNewDay()) {
+                localStorage.setItem('wordleDay', today);
+                localStorage.removeItem('wordleProgress');
             }
-        } else {
-            row.children[i].classList.add('absent');
-            if (!config.keyboardState[word[i]]) {
-                config.keyboardState[word[i]] = 'absent';
+            
+            // Carrega o progresso salvo
+            const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
+            
+            // Verifica se o tamanho atual já foi jogado
+            if (progress[config.wordLength]?.gameOver) {
+                config.gameOver = true;
+                board.style.display = 'none';
+                showMessage(`Você já completou o jogo de ${config.wordLength} letras hoje!`, 'error');
+                updateCountdown();
+                return;
+            }
+            
+            // Configura o jogo
+            config.targetWord = getDailyWord();
+            config.currentAttempt = 0;
+            config.currentGuess = [];
+            config.gameOver = false;
+            config.keyboardState = {};
+            
+            // Mostra o tabuleiro (caso estivesse escondido)
+            board.style.display = 'grid';
+            
+            // Atualiza CSS vars para o tabuleiro
+            document.documentElement.style.setProperty('--rows', config.maxAttempts);
+            document.documentElement.style.setProperty('--cols', config.wordLength);
+            
+            // Atualiza a informação do dia
+            dailyInfo.textContent = `Palavra do dia (${config.wordLength} letras) - ${formatDate(new Date())}`;
+            
+            // Limpa o tabuleiro
+            board.innerHTML = '';
+            
+            // Cria as células do tabuleiro
+            for (let i = 0; i < config.maxAttempts; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                
+                for (let j = 0; j < config.wordLength; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    row.appendChild(cell);
+                }
+                
+                board.appendChild(row);
+            }
+            
+            // Carrega o progresso existente
+            if (progress[config.wordLength]) {
+                const saved = progress[config.wordLength];
+                config.currentAttempt = saved.attempts?.length || 0;
+                config.keyboardState = saved.keyboardState || {};
+                config.gameOver = saved.gameOver || false;
+                
+                // Preenche tentativas anteriores
+                if (saved.attempts) {
+                    for (let i = 0; i < saved.attempts.length; i++) {
+                        const row = board.children[i];
+                        const word = saved.attempts[i];
+                        
+                        for (let j = 0; j < config.wordLength; j++) {
+                            const cell = row.children[j];
+                            cell.textContent = word[j] || '';
+                            cell.classList.add('filled');
+                        }
+                        
+                        // Simula a verificação da palavra
+                        simulateWordCheck(i, word);
+                    }
+                }
+                
+                if (config.gameOver) {
+                    board.style.display = 'none';
+                    showMessage(`Você já completou o jogo de ${config.wordLength} letras hoje!`, 'error');
+                    updateCountdown();
+                }
+            }
+            
+            updateBoard();
+            updateKeyboard();
+        }
+
+        // Simula a verificação de uma palavra (para carregar estado salvo)
+        function simulateWordCheck(rowIndex, word) {
+            const row = board.children[rowIndex];
+            const targetLetters = config.targetWord.split('');
+            const guessLetters = word.split('');
+            
+            // Verifica letras corretas
+            for (let i = 0; i < config.wordLength; i++) {
+                if (guessLetters[i] === targetLetters[i]) {
+                    row.children[i].classList.add('correct');
+                    targetLetters[i] = null;
+                    guessLetters[i] = null;
+                    config.keyboardState[word[i]] = 'correct';
+                }
+            }
+            
+            // Verifica letras presentes
+            for (let i = 0; i < config.wordLength; i++) {
+                if (guessLetters[i] === null) continue;
+                
+                const index = targetLetters.indexOf(guessLetters[i]);
+                if (index !== -1) {
+                    row.children[i].classList.add('present');
+                    targetLetters[index] = null;
+                    if (config.keyboardState[word[i]] !== 'correct') {
+                        config.keyboardState[word[i]] = 'present';
+                    }
+                } else {
+                    row.children[i].classList.add('absent');
+                    if (!config.keyboardState[word[i]]) {
+                        config.keyboardState[word[i]] = 'absent';
+                    }
+                }
             }
         }
-    }
-}
 
-// Formata a data para exibição
-function formatDate(date) {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('pt-BR', options);
-}
-
-// Atualiza o contador
-function updateCountdown() {
-    const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0);
-    
-    const diff = midnight - now;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    countdown.textContent = `Próxima palavra em: ${hours}h ${minutes}m`;
-    countdown.style.display = 'block';
-}
-
-// Desativa o teclado
-function disableKeyboard() {
-    keys.forEach(key => {
-        key.style.pointerEvents = 'none';
-        key.style.opacity = '0.6';
-    });
-}
-
-// Atualiza o estado das teclas
-function updateKeyboard() {
-    keys.forEach(key => {
-        const keyChar = key.dataset.key;
-        if (config.keyboardState[keyChar]) {
-            key.className = `key ${config.keyboardState[keyChar]}`;
-        } else {
-            key.className = 'key';
+        // Formata a data para exibição
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('pt-BR', options);
         }
-    });
-}
 
-// Adiciona uma letra
-function addLetter(letter) {
-    if (config.currentGuess.length < config.wordLength && !config.gameOver) {
-        config.currentGuess.push(letter);
-        updateBoard();
-    }
-}
-
-// Remove a última letra
-function removeLetter() {
-    if (config.currentGuess.length > 0 && !config.gameOver) {
-        config.currentGuess.pop();
-        updateBoard();
-    }
-}
-
-// Atualiza o tabuleiro
-function updateBoard() {
-    const row = board.children[config.currentAttempt];
-    
-    for (let i = 0; i < config.wordLength; i++) {
-        const cell = row.children[i];
-        if (i < config.currentGuess.length) {
-            cell.textContent = config.currentGuess[i];
-            cell.classList.add('filled');
-        } else {
-            cell.textContent = '';
-            cell.classList.remove('filled');
+        // Atualiza o contador
+        function updateCountdown() {
+            const now = new Date();
+            const midnight = new Date();
+            midnight.setHours(24, 0, 0, 0);
+            
+            const diff = midnight - now;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            countdown.textContent = `Próxima palavra em: ${hours}h ${minutes}m`;
+            countdown.style.display = 'block';
         }
-    }
-}
 
-// Verifica a tentativa
-function checkGuess(isUserAction = true) {
-    if (config.currentGuess.length !== config.wordLength || config.gameOver) {
-        if (isUserAction) {
-            showMessage('Palavra incompleta!', 'error');
+        // Desativa o teclado
+        function disableKeyboard() {
+            keys.forEach(key => {
+                key.style.pointerEvents = 'none';
+                key.style.opacity = '0.6';
+            });
+        }
+
+        // Ativa o teclado
+        function enableKeyboard() {
+            keys.forEach(key => {
+                key.style.pointerEvents = 'auto';
+                key.style.opacity = '1';
+            });
+        }
+
+        // Atualiza o estado das teclas
+        function updateKeyboard() {
+            keys.forEach(key => {
+                const keyChar = key.dataset.key;
+                if (config.keyboardState[keyChar]) {
+                    key.className = `key ${config.keyboardState[keyChar]}`;
+                } else {
+                    key.className = 'key';
+                }
+            });
+        }
+
+        // Adiciona uma letra
+        function addLetter(letter) {
+            if (config.currentGuess.length < config.wordLength && !config.gameOver) {
+                config.currentGuess.push(letter);
+                updateBoard();
+            }
+        }
+
+        // Remove a última letra
+        function removeLetter() {
+            if (config.currentGuess.length > 0 && !config.gameOver) {
+                config.currentGuess.pop();
+                updateBoard();
+            }
+        }
+
+        // Atualiza o tabuleiro
+        function updateBoard() {
+            const row = board.children[config.currentAttempt];
+            
+            for (let i = 0; i < config.wordLength; i++) {
+                const cell = row.children[i];
+                if (i < config.currentGuess.length) {
+                    cell.textContent = config.currentGuess[i];
+                    cell.classList.add('filled');
+                } else {
+                    cell.textContent = '';
+                    cell.classList.remove('filled');
+                }
+            }
+        }
+
+        // Verifica a tentativa
+        function checkGuess(isUserAction = true) {
+            if (config.currentGuess.length !== config.wordLength || config.gameOver) {
+                if (isUserAction) {
+                    showMessage('Palavra incompleta!', 'error');
+                    setTimeout(() => {
+                        message.className = 'message';
+                    }, 1000);
+                }
+                return false;
+            }
+            
+            const guess = config.currentGuess.join('');
+            
+            // Verifica se a palavra é válida
+            if (isUserAction && !isValidWord(guess)) {
+                showMessage('Palavra não reconhecida!', 'error');
+                const row = board.children[config.currentAttempt];
+                row.classList.add('shake');
+                setTimeout(() => {
+                    row.classList.remove('shake');
+                    message.className = 'message';
+                }, 1000);
+                return false;
+            }
+            
+            const row = board.children[config.currentAttempt];
+            const targetLetters = config.targetWord.split('');
+            const guessLetters = [...config.currentGuess];
+            
+            // Adiciona animação de flip
+            for (let i = 0; i < config.wordLength; i++) {
+                const cell = row.children[i];
+                setTimeout(() => {
+                    cell.classList.add('flip');
+                    setTimeout(() => {
+                        cell.classList.remove('flip');
+                    }, 600);
+                }, i * 200);
+            }
+            
+            // Verifica letras corretas
+            for (let i = 0; i < config.wordLength; i++) {
+                if (guessLetters[i] === targetLetters[i]) {
+                    setTimeout(() => {
+                        row.children[i].classList.add('correct');
+                    }, i * 200 + 300);
+                    targetLetters[i] = null;
+                    guessLetters[i] = null;
+                    config.keyboardState[guess[i]] = 'correct';
+                }
+            }
+            
+            // Verifica letras presentes
+            for (let i = 0; i < config.wordLength; i++) {
+                if (guessLetters[i] === null) continue;
+                
+                const index = targetLetters.indexOf(guessLetters[i]);
+                if (index !== -1) {
+                    setTimeout(() => {
+                        row.children[i].classList.add('present');
+                    }, i * 200 + 300);
+                    targetLetters[index] = null;
+                    if (config.keyboardState[guess[i]] !== 'correct') {
+                        config.keyboardState[guess[i]] = 'present';
+                    }
+                } else {
+                    setTimeout(() => {
+                        row.children[i].classList.add('absent');
+                    }, i * 200 + 300);
+                    if (!config.keyboardState[guess[i]]) {
+                        config.keyboardState[guess[i]] = 'absent';
+                    }
+                }
+            }
+            
+            setTimeout(() => {
+                updateKeyboard();
+            }, config.wordLength * 200 + 300);
+            
+            // Verifica vitória
+            if (guess === config.targetWord) {
+                setTimeout(() => {
+                    showMessage('Parabéns! Você acertou!', 'success');
+                    config.gameOver = true;
+                    
+                    // Atualiza estatísticas antes de salvar
+                    if (isUserAction) {
+                        updateStats(true, config.currentAttempt + 1);
+                    }
+                    
+                    // Esconde o tabuleiro e mostra mensagem de já jogado
+                    board.style.display = 'none';
+                    setTimeout(() => {
+                        showMessage(`Você já completou o jogo de ${config.wordLength} letras hoje!`, 'error');
+                    }, 1500);
+                    
+                    saveProgress();
+                    updateCountdown();
+                    setInterval(updateCountdown, 60000);
+                }, config.wordLength * 200 + 500);
+                return true;
+            }
+            
+            // Avança tentativa
+            config.currentAttempt++;
+            config.currentGuess = [];
+            
+            // Verifica derrota
+            if (config.currentAttempt >= config.maxAttempts) {
+                setTimeout(() => {
+                    showMessage(`Fim de jogo! A palavra era: ${config.targetWord}`, 'error');
+                    config.gameOver = true;
+                    
+                    // Atualiza estatísticas antes de salvar
+                    if (isUserAction) {
+                        updateStats(false);
+                    }
+                    
+                    // Esconde o tabuleiro
+                    board.style.display = 'none';
+                    
+                    saveProgress();
+                    updateCountdown();
+                    setInterval(updateCountdown, 60000);
+                }, config.wordLength * 200 + 500);
+                return false;
+            }
+            
+            if (isUserAction) {
+                saveProgress();
+            }
+            return false;
+        }
+
+        // Salva o progresso
+        function saveProgress() {
+            const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
+            
+            // Coleta tentativas
+            const attempts = [];
+            for (let i = 0; i < config.currentAttempt; i++) {
+                const row = board.children[i];
+                let word = '';
+                for (let j = 0; j < config.wordLength; j++) {
+                    word += row.children[j].textContent;
+                }
+                attempts.push(word);
+            }
+            
+            progress[config.wordLength] = {
+                attempts: attempts,
+                keyboardState: config.keyboardState,
+                gameOver: config.gameOver
+            };
+            
+            localStorage.setItem('wordleProgress', JSON.stringify(progress));
+        }
+
+        // Exibe mensagem
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message show ${type}`;
+        }
+
+        // Compartilhar estatísticas
+        function shareStats() {
+            let shareText = `Sem Palavras - Estatísticas\n\n`;
+            shareText += `Jogos: ${stats.gamesPlayed}\n`;
+            shareText += `Vitórias: ${stats.gamesWon} (${stats.gamesPlayed > 0 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0}%)\n`;
+            shareText += `Sequência atual: ${stats.currentStreak}\n`;
+            shareText += `Máxima sequência: ${stats.maxStreak}\n\n`;
+            shareText += `Distribuição de tentativas:\n`;
+            
+            for (let i = 0; i < 6; i++) {
+                shareText += `${i + 1}: ${stats.guessDistribution[i]}\n`;
+            }
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Minhas Estatísticas - Sem Palavras',
+                    text: shareText
+                }).catch(() => {
+                    copyToClipboard(shareText);
+                });
+            } else {
+                copyToClipboard(shareText);
+            }
+        }
+
+        // Copiar para área de transferência
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showMessage('Estatísticas copiadas!', 'success');
             setTimeout(() => {
                 message.className = 'message';
-            }, 1000);
+            }, 2000);
         }
-        return false;
-    }
-    
-    const guess = config.currentGuess.join('');
-    
-    // Verifica se a palavra é válida
-    if (isUserAction && !isValidWord(guess)) {
-        showMessage('Palavra não reconhecida!', 'error');
-        const row = board.children[config.currentAttempt];
-        row.classList.add('shake');
-        setTimeout(() => {
-            row.classList.remove('shake');
-            message.className = 'message';
-        }, 1000);
-        return false;
-    }
-    
-    const row = board.children[config.currentAttempt];
-    const targetLetters = config.targetWord.split('');
-    const guessLetters = [...config.currentGuess];
-    
-    // Adiciona animação de flip
-    for (let i = 0; i < config.wordLength; i++) {
-        const cell = row.children[i];
-        setTimeout(() => {
-            cell.classList.add('flip');
-            setTimeout(() => {
-                cell.classList.remove('flip');
-            }, 600);
-        }, i * 200);
-    }
-    
-    // Verifica letras corretas
-    for (let i = 0; i < config.wordLength; i++) {
-        if (guessLetters[i] === targetLetters[i]) {
-            setTimeout(() => {
-                row.children[i].classList.add('correct');
-            }, i * 200 + 300);
-            targetLetters[i] = null;
-            guessLetters[i] = null;
-            config.keyboardState[guess[i]] = 'correct';
-        }
-    }
-    
-    // Verifica letras presentes
-    for (let i = 0; i < config.wordLength; i++) {
-        if (guessLetters[i] === null) continue;
-        
-        const index = targetLetters.indexOf(guessLetters[i]);
-        if (index !== -1) {
-            setTimeout(() => {
-                row.children[i].classList.add('present');
-            }, i * 200 + 300);
-            targetLetters[index] = null;
-            if (config.keyboardState[guess[i]] !== 'correct') {
-                config.keyboardState[guess[i]] = 'present';
-            }
-        } else {
-            setTimeout(() => {
-                row.children[i].classList.add('absent');
-            }, i * 200 + 300);
-            if (!config.keyboardState[guess[i]]) {
-                config.keyboardState[guess[i]] = 'absent';
-            }
-        }
-    }
-    
-    setTimeout(() => {
-        updateKeyboard();
-    }, config.wordLength * 200 + 300);
-    
-    // Verifica vitória
-    if (guess === config.targetWord) {
-        setTimeout(() => {
-            showMessage('Parabéns! Você acertou!', 'success');
-            config.gameOver = true;
-            if (isUserAction) {
-                updateStats(true, config.currentAttempt + 1);
-            }
-            saveProgress();
-            disableKeyboard();
-            setInterval(updateCountdown, 60000);
-        }, config.wordLength * 200 + 500);
-        return true;
-    }
-    
-    // Avança tentativa
-    config.currentAttempt++;
-    config.currentGuess = [];
-    
-    // Verifica derrota
-    if (config.currentAttempt >= config.maxAttempts) {
-        setTimeout(() => {
-            showMessage(`Fim de jogo! A palavra era: ${config.targetWord}`, 'error');
-            config.gameOver = true;
-            if (isUserAction) {
-                updateStats(false);
-            }
-            saveProgress();
-            disableKeyboard();
-            setInterval(updateCountdown, 60000);
-        }, config.wordLength * 200 + 500);
-        return false;
-    }
-    
-    if (isUserAction) {
-        saveProgress();
-    }
-    return false;
-}
 
-// Salva o progresso
-function saveProgress() {
-    const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
-    
-    // Coleta tentativas
-    const attempts = [];
-    for (let i = 0; i < config.currentAttempt; i++) {
-        const row = board.children[i];
-        let word = '';
-        for (let j = 0; j < config.wordLength; j++) {
-            word += row.children[j].textContent;
+        // Reset administrativo
+        function forceReset() {
+            const password = prompt("Digite a senha administrativa para resetar o jogo:");
+            if (password === ADMIN_PASSWORD) {
+                localStorage.removeItem('wordleDaily');
+                localStorage.removeItem('wordleProgress');
+                localStorage.removeItem('wordleStats');
+                alert("Jogo resetado com sucesso! A página será recarregada.");
+                location.reload();
+            } else if (password) {
+                alert("Senha incorreta!");
+            }
         }
-        attempts.push(word);
-    }
-    
-    progress[config.wordLength] = {
-        attempts: attempts,
-        keyboardState: config.keyboardState,
-        gameOver: config.gameOver
-    };
-    
-    localStorage.setItem('wordleProgress', JSON.stringify(progress));
-}
 
-// Exibe mensagem
-function showMessage(text, type) {
-    message.textContent = text;
-    message.className = `message show ${type}`;
-}
+        // Inicializa o jogo com tratamento de erro
+        function safeInitGame() {
+            try {
+                initGame();
+            } catch (error) {
+                console.error('Erro ao inicializar o jogo:', error);
+                // Tenta recuperar resetando o jogo
+                localStorage.removeItem('wordleProgress');
+                initGame();
+            }
+        }
 
-// Compartilhar estatísticas
-function shareStats() {
-    let shareText = `Sem Palavras - Estatísticas\n\n`;
-    shareText += `Jogos: ${stats.gamesPlayed}\n`;
-    shareText += `Vitórias: ${stats.gamesWon} (${stats.gamesPlayed > 0 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0}%)\n`;
-    shareText += `Sequência atual: ${stats.currentStreak}\n`;
-    shareText += `Máxima sequência: ${stats.maxStreak}\n\n`;
-    shareText += `Distribuição de tentativas:\n`;
-    
-    for (let i = 0; i < 6; i++) {
-        shareText += `${i + 1}: ${stats.guessDistribution[i]}\n`;
-    }
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'Minhas Estatísticas - Sem Palavras',
-            text: shareText
-        }).catch(() => {
-            copyToClipboard(shareText);
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (config.gameOver) return;
+            
+            if (e.key === 'Enter') {
+                checkGuess(true);
+            } else if (e.key === 'Backspace') {
+                removeLetter();
+            } else if (/^[A-Za-z]$/.test(e.key)) {
+                addLetter(e.key.toUpperCase());
+            }
         });
-    } else {
-        copyToClipboard(shareText);
-    }
-}
 
-// Copiar para área de transferência
-function copyToClipboard(text) {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    showMessage('Estatísticas copiadas!', 'success');
-    setTimeout(() => {
-        message.className = 'message';
-    }, 2000);
-}
+        keys.forEach(key => {
+            key.addEventListener('click', () => {
+                if (config.gameOver) return;
+                
+                const keyValue = key.dataset.key;
+                if (keyValue === 'Enter') {
+                    checkGuess(true);
+                } else if (keyValue === 'Backspace') {
+                    removeLetter();
+                } else {
+                    addLetter(keyValue);
+                }
+            });
+        });
 
-// Reset administrativo
-function forceReset() {
-    const password = prompt("Digite a senha administrativa para resetar o jogo:");
-    if (password === ADMIN_PASSWORD) {
-        localStorage.removeItem('wordleDaily');
-        localStorage.removeItem('wordleProgress');
-        localStorage.removeItem('wordleStats');
-        alert("Jogo resetado com sucesso! A página será recarregada.");
-        location.reload();
-    } else if (password) {
-        alert("Senha incorreta!");
-    }
-}
+        wordLengthSelect.addEventListener('change', () => {
+            const newSize = parseInt(wordLengthSelect.value);
+            const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
+            
+            if (progress[newSize]?.gameOver) {
+                showMessage(`Você já completou ${newSize} letras hoje! Escolha outro tamanho.`, 'error');
+                wordLengthSelect.value = config.wordLength;
+                return;
+            }
+            
+            config.wordLength = newSize;
+            safeInitGame();
+        });
 
-// Inicializa o jogo com tratamento de erro
-function safeInitGame() {
-    try {
-        initGame();
-    } catch (error) {
-        console.error('Erro ao inicializar o jogo:', error);
-        // Tenta recuperar resetando o jogo
-        localStorage.removeItem('wordleProgress');
-        initGame();
-    }
-}
+        statsBtn.addEventListener('click', () => {
+            statsPanel.classList.add('show');
+        });
 
-// Event listeners
-document.addEventListener('keydown', (e) => {
-    if (config.gameOver) return;
-    
-    if (e.key === 'Enter') {
-        checkGuess(true);
-    } else if (e.key === 'Backspace') {
-        removeLetter();
-    } else if (/^[A-Za-z]$/.test(e.key)) {
-        addLetter(e.key.toUpperCase());
-    }
-});
+        closeStatsBtn.addEventListener('click', () => {
+            statsPanel.classList.remove('show');
+        });
 
-keys.forEach(key => {
-    key.addEventListener('click', () => {
-        if (config.gameOver) return;
-        
-        const keyValue = key.dataset.key;
-        if (keyValue === 'Enter') {
-            checkGuess(true);
-        } else if (keyValue === 'Backspace') {
-            removeLetter();
-        } else {
-            addLetter(keyValue);
-        }
-    });
-});
+        shareStatsBtn.addEventListener('click', shareStats);
 
-wordLengthSelect.addEventListener('change', () => {
-    const newSize = parseInt(wordLengthSelect.value);
-    const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
-    
-    if (progress[newSize]?.gameOver) {
-        showMessage(`Você já completou ${newSize} letras hoje! Escolha outro tamanho.`, 'error');
-        wordLengthSelect.value = config.wordLength;
-        return;
-    }
-    
-    config.wordLength = newSize;
-    safeInitGame();
-});
+        // Verifica mudança de dia
+        setInterval(() => {
+            if (isNewDay()) {
+                location.reload();
+            }
+        }, 60000);
 
-statsBtn.addEventListener('click', () => {
-    statsPanel.classList.add('show');
-});
-
-closeStatsBtn.addEventListener('click', () => {
-    statsPanel.classList.remove('show');
-});
-
-shareStatsBtn.addEventListener('click', shareStats);
-
-// Verifica mudança de dia
-setInterval(() => {
-    if (isNewDay()) {
-        location.reload();
-    }
-}, 60000);
-
-// Inicia o jogo e estatísticas
-initStats();
-updateStatsDisplay();
-safeInitGame();
+        // Inicia o jogo e estatísticas
+        initStats();
+        updateStatsDisplay();
+        safeInitGame();
     </script>
 </body>
 </html>
