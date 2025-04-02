@@ -638,7 +638,7 @@ let stats = {
 async function loadDictionary() {
     try {
         // Carrega do repositório específico
-        const response = await fetch('https://raw.githubusercontent.com/pythonprobr/palavras/master/palavras.txt');
+        const response = await fetch('palavras.txt');
         
         if (!response.ok) {
             throw new Error('Falha ao carregar o dicionário');
