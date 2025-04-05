@@ -679,7 +679,7 @@ async function loadDictionary() {
         allWords = Object.values(targetWordLists).flat().map(w => w.toUpperCase());
         allWords.forEach(word => dictionary.add(word));
     }
-}
+
 
 function isValidWord(word) {
     return dictionary.has(word.toUpperCase());
