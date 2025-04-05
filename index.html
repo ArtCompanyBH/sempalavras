@@ -647,50 +647,35 @@ let stats = {
 // Carrega o dicionário de palavras válidas
 async function loadDictionary() {
     try {
-        // Carrega do repositório específico
         const response = await fetch('palavras.txt');
-        
-        if (!response.ok) {
-            throw new Error('Falha ao carregar o dicionário');
-        }
+        if (!response.ok) throw new Error('Falha ao carregar o dicionário');
         
         const text = await response.text();
         const words = text.split('\n')
             .map(word => word.trim().toUpperCase())
             .filter(word => word.length >= 4 && word.length <= 6);
         
-        // Preenche o dicionário e a lista de todas as palavras
         allWords = words;
         words.forEach(word => dictionary.add(word));
-        
-        console.log('Dicionário carregado com', dictionary.size, 'palavras válidas');
         
         // Adiciona as palavras-alvo como fallback
         Object.values(targetWordLists).flat().forEach(word => {
             const upperWord = word.toUpperCase();
             dictionary.add(upperWord);
-            if (!allWords.includes(upperWord)) {
-                allWords.push(upperWord);
-            }
+            if (!allWords.includes(upperWord)) allWords.push(upperWord);
         });
         
     } catch (error) {
         console.error('Erro ao carregar dicionário:', error);
-        
-        // Fallback: usa apenas as palavras-alvo
         allWords = Object.values(targetWordLists).flat().map(w => w.toUpperCase());
         allWords.forEach(word => dictionary.add(word));
-        
-        console.log('Usando fallback com', dictionary.size, 'palavras');
     }
 }
 
-// Função para verificar se uma palavra é válida
 function isValidWord(word) {
     return dictionary.has(word.toUpperCase());
 }
 
-// Função para gerar a palavra do dia (modo temático)
 function getDailyWord() {
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
@@ -703,24 +688,30 @@ function getDailyWord() {
     
     const wordList = targetWordLists[config.wordLength];
     const index = Math.abs(hash) % wordList.length;
-    
     return wordList[index].toUpperCase();
 }
 
-// Função para gerar uma palavra aleatória (modo aleatório)
-function getRandomWord() {
+function getRandomDailyWord() {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    
+    let hash = 0;
+    for (let i = 0; i < dateStr.length; i++) {
+        hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+        hash |= 0;
+    }
+    
     const wordsOfLength = allWords.filter(word => word.length === config.wordLength);
     if (wordsOfLength.length === 0) {
-        // Fallback para as palavras temáticas se não houver palavras do tamanho certo
         const wordList = targetWordLists[config.wordLength] || [];
-        const randomIndex = Math.floor(Math.random() * wordList.length);
-        return wordList[randomIndex].toUpperCase();
+        const index = Math.abs(hash) % wordList.length;
+        return wordList[index].toUpperCase();
     }
-    const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
-    return wordsOfLength[randomIndex].toUpperCase();
+    
+    const index = Math.abs(hash) % wordsOfLength.length;
+    return wordsOfLength[index].toUpperCase();
 }
 
-// Inicializa estatísticas
 function initStats() {
     const savedStats = localStorage.getItem('wordleStats');
     if (savedStats) {
@@ -739,7 +730,6 @@ function initStats() {
     }
 }
 
-// Reseta estatísticas
 function resetStats() {
     stats = {
         gamesPlayed: 0,
@@ -752,24 +742,16 @@ function resetStats() {
     localStorage.setItem('wordleStats', JSON.stringify(stats));
 }
 
-// Atualiza estatísticas
 function updateStats(win, attempts) {
     const today = new Date().toISOString().split('T')[0];
-    
     if (stats.lastPlayed === today) return;
     
     stats.gamesPlayed++;
-    
     if (win) {
         stats.gamesWon++;
         stats.currentStreak++;
-        if (stats.currentStreak > stats.maxStreak) {
-            stats.maxStreak = stats.currentStreak;
-        }
-        
-        if (attempts >= 1 && attempts <= 6) {
-            stats.guessDistribution[attempts - 1]++;
-        }
+        if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
+        if (attempts >= 1 && attempts <= 6) stats.guessDistribution[attempts - 1]++;
     } else {
         stats.currentStreak = 0;
     }
@@ -779,7 +761,6 @@ function updateStats(win, attempts) {
     updateStatsDisplay();
 }
 
-// Mostra estatísticas
 function updateStatsDisplay() {
     gamesPlayedEl.textContent = stats.gamesPlayed;
     winPercentageEl.textContent = stats.gamesPlayed > 0 
@@ -794,8 +775,7 @@ function updateStatsDisplay() {
     for (let i = 0; i < 6; i++) {
         const bar = document.createElement('div');
         bar.className = 'history-bar';
-        const height = stats.guessDistribution[i] / maxValue * 80;
-        bar.style.height = `${height}px`;
+        bar.style.height = `${stats.guessDistribution[i] / maxValue * 80}px`;
         
         const label = document.createElement('div');
         label.className = 'history-bar-label';
@@ -815,14 +795,12 @@ function updateStatsDisplay() {
     }
 }
 
-// Verifica se é um novo dia
 function isNewDay() {
     const today = new Date().toDateString();
     const storedDay = localStorage.getItem('wordleDay');
     return storedDay !== today;
 }
 
-// Inicializa o jogo
 async function initGame() {
     await loadDictionary();
     
@@ -842,15 +820,13 @@ async function initGame() {
         return;
     }
     
-    // Escolhe a palavra alvo baseado no modo de jogo
-    config.targetWord = config.gameMode === 'daily' ? getDailyWord() : getRandomWord();
+    config.targetWord = config.gameMode === 'daily' ? getDailyWord() : getRandomDailyWord();
     config.currentAttempt = 0;
     config.currentGuess = [];
     config.gameOver = false;
     config.keyboardState = {};
     
     board.style.display = 'grid';
-    
     document.documentElement.style.setProperty('--rows', config.maxAttempts);
     document.documentElement.style.setProperty('--cols', config.wordLength);
     
@@ -859,11 +835,9 @@ async function initGame() {
         : `Modo Aleatório (${config.wordLength} letras) - ${formatDate(new Date())}`;
     
     board.innerHTML = '';
-    
     for (let i = 0; i < config.maxAttempts; i++) {
         const row = document.createElement('div');
         row.className = 'row';
-        
         for (let j = 0; j < config.wordLength; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
@@ -871,7 +845,6 @@ async function initGame() {
             cell.dataset.col = j;
             row.appendChild(cell);
         }
-        
         board.appendChild(row);
     }
     
@@ -885,13 +858,11 @@ async function initGame() {
             for (let i = 0; i < saved.attempts.length; i++) {
                 const row = board.children[i];
                 const word = saved.attempts[i];
-                
                 for (let j = 0; j < config.wordLength; j++) {
                     const cell = row.children[j];
                     cell.textContent = word[j] || '';
                     cell.classList.add('filled');
                 }
-                
                 simulateWordCheck(i, word);
             }
         }
@@ -907,7 +878,6 @@ async function initGame() {
     updateKeyboard();
 }
 
-// Simula a verificação de uma palavra
 function simulateWordCheck(rowIndex, word) {
     const row = board.children[rowIndex];
     const targetLetters = config.targetWord.split('');
@@ -941,13 +911,11 @@ function simulateWordCheck(rowIndex, word) {
     }
 }
 
-// Formata a data para exibição
 function formatDate(date) {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString('pt-BR', options);
 }
 
-// Atualiza o contador
 function updateCountdown() {
     const now = new Date();
     const midnight = new Date();
@@ -961,7 +929,6 @@ function updateCountdown() {
     countdown.style.display = 'block';
 }
 
-// Desativa o teclado
 function disableKeyboard() {
     keys.forEach(key => {
         key.style.pointerEvents = 'none';
@@ -969,7 +936,6 @@ function disableKeyboard() {
     });
 }
 
-// Ativa o teclado
 function enableKeyboard() {
     keys.forEach(key => {
         key.style.pointerEvents = 'auto';
@@ -977,7 +943,6 @@ function enableKeyboard() {
     });
 }
 
-// Atualiza o estado das teclas
 function updateKeyboard() {
     keys.forEach(key => {
         const keyChar = key.dataset.key;
@@ -989,7 +954,6 @@ function updateKeyboard() {
     });
 }
 
-// Adiciona uma letra
 function addLetter(letter) {
     if (config.currentGuess.length < config.wordLength && !config.gameOver) {
         config.currentGuess.push(letter);
@@ -997,7 +961,6 @@ function addLetter(letter) {
     }
 }
 
-// Remove a última letra
 function removeLetter() {
     if (config.currentGuess.length > 0 && !config.gameOver) {
         config.currentGuess.pop();
@@ -1005,10 +968,8 @@ function removeLetter() {
     }
 }
 
-// Atualiza o tabuleiro
 function updateBoard() {
     const row = board.children[config.currentAttempt];
-    
     for (let i = 0; i < config.wordLength; i++) {
         const cell = row.children[i];
         if (i < config.currentGuess.length) {
@@ -1021,20 +982,16 @@ function updateBoard() {
     }
 }
 
-// Verifica a tentativa
 function checkGuess(isUserAction = true) {
     if (config.currentGuess.length !== config.wordLength || config.gameOver) {
         if (isUserAction) {
             showMessage('Palavra incompleta!', 'error');
-            setTimeout(() => {
-                message.className = 'message';
-            }, 1000);
+            setTimeout(() => message.className = 'message', 1000);
         }
         return false;
     }
     
     const guess = config.currentGuess.join('').toUpperCase();
-    
     if (isUserAction && !isValidWord(guess)) {
         showMessage('Palavra não reconhecida!', 'error');
         const row = board.children[config.currentAttempt];
@@ -1054,17 +1011,13 @@ function checkGuess(isUserAction = true) {
         const cell = row.children[i];
         setTimeout(() => {
             cell.classList.add('flip');
-            setTimeout(() => {
-                cell.classList.remove('flip');
-            }, 600);
+            setTimeout(() => cell.classList.remove('flip'), 600);
         }, i * 200);
     }
     
     for (let i = 0; i < config.wordLength; i++) {
         if (guessLetters[i] === targetLetters[i]) {
-            setTimeout(() => {
-                row.children[i].classList.add('correct');
-            }, i * 200 + 300);
+            setTimeout(() => row.children[i].classList.add('correct'), i * 200 + 300);
             targetLetters[i] = null;
             guessLetters[i] = null;
             config.keyboardState[guess[i]] = 'correct';
@@ -1076,41 +1029,30 @@ function checkGuess(isUserAction = true) {
         
         const index = targetLetters.indexOf(guessLetters[i]);
         if (index !== -1) {
-            setTimeout(() => {
-                row.children[i].classList.add('present');
-            }, i * 200 + 300);
+            setTimeout(() => row.children[i].classList.add('present'), i * 200 + 300);
             targetLetters[index] = null;
             if (config.keyboardState[guess[i]] !== 'correct') {
                 config.keyboardState[guess[i]] = 'present';
             }
         } else {
-            setTimeout(() => {
-                row.children[i].classList.add('absent');
-            }, i * 200 + 300);
+            setTimeout(() => row.children[i].classList.add('absent'), i * 200 + 300);
             if (!config.keyboardState[guess[i]]) {
                 config.keyboardState[guess[i]] = 'absent';
             }
         }
     }
     
-    setTimeout(() => {
-        updateKeyboard();
-    }, config.wordLength * 200 + 300);
+    setTimeout(() => updateKeyboard(), config.wordLength * 200 + 300);
     
     if (guess === config.targetWord) {
         setTimeout(() => {
             showMessage('Parabéns! Você acertou!', 'success');
             config.gameOver = true;
-            
-            if (isUserAction) {
-                updateStats(true, config.currentAttempt + 1);
-            }
-            
+            if (isUserAction) updateStats(true, config.currentAttempt + 1);
             board.style.display = 'none';
             setTimeout(() => {
                 showMessage(`Você já completou o jogo de ${config.wordLength} letras no modo ${config.gameMode === 'daily' ? 'temático' : 'aleatório'} hoje!`, 'error');
             }, 1500);
-            
             saveProgress();
             updateCountdown();
             setInterval(updateCountdown, 60000);
@@ -1125,13 +1067,8 @@ function checkGuess(isUserAction = true) {
         setTimeout(() => {
             showMessage(`Fim de jogo! A palavra era: ${config.targetWord}`, 'error');
             config.gameOver = true;
-            
-            if (isUserAction) {
-                updateStats(false);
-            }
-            
+            if (isUserAction) updateStats(false);
             board.style.display = 'none';
-            
             saveProgress();
             updateCountdown();
             setInterval(updateCountdown, 60000);
@@ -1139,19 +1076,13 @@ function checkGuess(isUserAction = true) {
         return false;
     }
     
-    if (isUserAction) {
-        saveProgress();
-    }
+    if (isUserAction) saveProgress();
     return false;
 }
 
-// Salva o progresso
 function saveProgress() {
     const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
-    
-    if (!progress[config.wordLength]) {
-        progress[config.wordLength] = {};
-    }
+    if (!progress[config.wordLength]) progress[config.wordLength] = {};
     
     const attempts = [];
     for (let i = 0; i < config.currentAttempt; i++) {
@@ -1172,13 +1103,11 @@ function saveProgress() {
     localStorage.setItem('wordleProgress', JSON.stringify(progress));
 }
 
-// Exibe mensagem
 function showMessage(text, type) {
     message.textContent = text;
     message.className = `message show ${type}`;
 }
 
-// Compartilhar estatísticas
 function shareStats() {
     let shareText = `Sem Palavras - Estatísticas\n\n`;
     shareText += `Jogos: ${stats.gamesPlayed}\n`;
@@ -1195,15 +1124,12 @@ function shareStats() {
         navigator.share({
             title: 'Minhas Estatísticas - Sem Palavras',
             text: shareText
-        }).catch(() => {
-            copyToClipboard(shareText);
-        });
+        }).catch(() => copyToClipboard(shareText));
     } else {
         copyToClipboard(shareText);
     }
 }
 
-// Copiar para área de transferência
 function copyToClipboard(text) {
     const textarea = document.createElement('textarea');
     textarea.value = text;
@@ -1212,12 +1138,9 @@ function copyToClipboard(text) {
     document.execCommand('copy');
     document.body.removeChild(textarea);
     showMessage('Estatísticas copiadas!', 'success');
-    setTimeout(() => {
-        message.className = 'message';
-    }, 2000);
+    setTimeout(() => message.className = 'message', 2000);
 }
 
-// Reset administrativo
 function forceReset() {
     const password = prompt("Digite a senha administrativa para resetar o jogo:");
     if (password === ADMIN_PASSWORD) {
@@ -1231,7 +1154,6 @@ function forceReset() {
     }
 }
 
-// Inicializa o jogo com tratamento de erro
 async function safeInitGame() {
     try {
         await initGame();
@@ -1245,28 +1167,18 @@ async function safeInitGame() {
 // Event listeners
 document.addEventListener('keydown', (e) => {
     if (config.gameOver) return;
-    
-    if (e.key === 'Enter') {
-        checkGuess(true);
-    } else if (e.key === 'Backspace') {
-        removeLetter();
-    } else if (/^[A-Za-z]$/.test(e.key)) {
-        addLetter(e.key.toUpperCase());
-    }
+    if (e.key === 'Enter') checkGuess(true);
+    else if (e.key === 'Backspace') removeLetter();
+    else if (/^[A-Za-z]$/.test(e.key)) addLetter(e.key.toUpperCase());
 });
 
 keys.forEach(key => {
     key.addEventListener('click', () => {
         if (config.gameOver) return;
-        
         const keyValue = key.dataset.key;
-        if (keyValue === 'Enter') {
-            checkGuess(true);
-        } else if (keyValue === 'Backspace') {
-            removeLetter();
-        } else {
-            addLetter(keyValue);
-        }
+        if (keyValue === 'Enter') checkGuess(true);
+        else if (keyValue === 'Backspace') removeLetter();
+        else addLetter(keyValue);
     });
 });
 
@@ -1298,21 +1210,13 @@ gameModeSelect.addEventListener('change', () => {
     safeInitGame();
 });
 
-statsBtn.addEventListener('click', () => {
-    statsPanel.classList.add('show');
-});
-
-closeStatsBtn.addEventListener('click', () => {
-    statsPanel.classList.remove('show');
-});
-
+statsBtn.addEventListener('click', () => statsPanel.classList.add('show'));
+closeStatsBtn.addEventListener('click', () => statsPanel.classList.remove('show'));
 shareStatsBtn.addEventListener('click', shareStats);
 
 // Verifica mudança de dia
 setInterval(() => {
-    if (isNewDay()) {
-        location.reload();
-    }
+    if (isNewDay()) location.reload();
 }, 60000);
 
 // Inicia o jogo e estatísticas
