@@ -666,7 +666,7 @@ async function loadDictionary() {
             if (!allWords.includes(upperWord)) allWords.push(upperWord);
         });
         
-    } catch (error) {
+     catch (error) {
         console.error('Erro ao carregar dicionário:', error);
         allWords = Object.values(targetWordLists).flat().map(w => w.toUpperCase());
         allWords.forEach(word => dictionary.add(word));
