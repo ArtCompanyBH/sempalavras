@@ -644,7 +644,6 @@ let stats = {
     lastPlayed: null
 };
 
-// Carrega o dicionário de palavras válidas
 async function loadDictionary() {
     try {
         const response = await fetch('palavras.txt');
@@ -658,12 +657,22 @@ async function loadDictionary() {
         allWords = words;
         words.forEach(word => dictionary.add(word));
         
+        console.log('Dicionário carregado com', dictionary.size, 'palavras válidas'); // Esta linha foi readicionada
+        
         // Adiciona as palavras-alvo como fallback
         Object.values(targetWordLists).flat().forEach(word => {
             const upperWord = word.toUpperCase();
             dictionary.add(upperWord);
             if (!allWords.includes(upperWord)) allWords.push(upperWord);
         });
+        
+    } catch (error) {
+        console.error('Erro ao carregar dicionário:', error);
+        allWords = Object.values(targetWordLists).flat().map(w => w.toUpperCase());
+        allWords.forEach(word => dictionary.add(word));
+        console.log('Usando fallback com', dictionary.size, 'palavras'); // Mensagem de fallback
+    }
+}
         
     } catch (error) {
         console.error('Erro ao carregar dicionário:', error);
