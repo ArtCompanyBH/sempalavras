@@ -503,6 +503,13 @@
                         <option value="6">6 letras</option>
                     </select>
                 </div>
+                <div class="setting-group">
+                    <label for="gameMode">Modo:</label>
+                    <select id="gameMode">
+                        <option value="daily">Temático GD</option>
+                        <option value="random">Aleatório</option>
+                    </select>
+                </div>
                 <button id="statsBtn" class="stats-btn">Estatísticas</button>
             </div>
             <div class="daily-info" id="dailyInfo"></div>
@@ -585,7 +592,7 @@
     </div>
 
     <script>
- // Configurações do jogo
+// Configurações do jogo
 const config = {
     wordLength: 5,
     maxAttempts: 6,
@@ -593,7 +600,8 @@ const config = {
     currentGuess: [],
     targetWord: '',
     gameOver: false,
-    keyboardState: {}
+    keyboardState: {},
+    gameMode: 'daily' // 'daily' ou 'random'
 };
 
 // Listas de palavras-alvo por tamanho (para garantir consistência diária)
@@ -605,12 +613,14 @@ const targetWordLists = {
 
 // Dicionário de palavras válidas
 let dictionary = new Set();
+let allWords = []; // Todas as palavras do arquivo palavras.txt
 
 // Elementos DOM
 const board = document.getElementById('board');
 const message = document.getElementById('message');
 const dailyInfo = document.getElementById('dailyInfo');
 const wordLengthSelect = document.getElementById('wordLength');
+const gameModeSelect = document.getElementById('gameMode');
 const keys = document.querySelectorAll('.key');
 const countdown = document.getElementById('countdown');
 const statsBtn = document.getElementById('statsBtn');
@@ -649,22 +659,27 @@ async function loadDictionary() {
             .map(word => word.trim().toUpperCase())
             .filter(word => word.length >= 4 && word.length <= 6);
         
+        // Preenche o dicionário e a lista de todas as palavras
+        allWords = words;
         words.forEach(word => dictionary.add(word));
         
         console.log('Dicionário carregado com', dictionary.size, 'palavras válidas');
         
         // Adiciona as palavras-alvo como fallback
         Object.values(targetWordLists).flat().forEach(word => {
-            dictionary.add(word.toUpperCase());
+            const upperWord = word.toUpperCase();
+            dictionary.add(upperWord);
+            if (!allWords.includes(upperWord)) {
+                allWords.push(upperWord);
+            }
         });
         
     } catch (error) {
         console.error('Erro ao carregar dicionário:', error);
         
         // Fallback: usa apenas as palavras-alvo
-        Object.values(targetWordLists).flat().forEach(word => {
-            dictionary.add(word.toUpperCase());
-        });
+        allWords = Object.values(targetWordLists).flat().map(w => w.toUpperCase());
+        allWords.forEach(word => dictionary.add(word));
         
         console.log('Usando fallback com', dictionary.size, 'palavras');
     }
@@ -675,7 +690,7 @@ function isValidWord(word) {
     return dictionary.has(word.toUpperCase());
 }
 
-// Função para gerar a palavra do dia
+// Função para gerar a palavra do dia (modo temático)
 function getDailyWord() {
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
@@ -690,6 +705,19 @@ function getDailyWord() {
     const index = Math.abs(hash) % wordList.length;
     
     return wordList[index].toUpperCase();
+}
+
+// Função para gerar uma palavra aleatória (modo aleatório)
+function getRandomWord() {
+    const wordsOfLength = allWords.filter(word => word.length === config.wordLength);
+    if (wordsOfLength.length === 0) {
+        // Fallback para as palavras temáticas se não houver palavras do tamanho certo
+        const wordList = targetWordLists[config.wordLength] || [];
+        const randomIndex = Math.floor(Math.random() * wordList.length);
+        return wordList[randomIndex].toUpperCase();
+    }
+    const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
+    return wordsOfLength[randomIndex].toUpperCase();
 }
 
 // Inicializa estatísticas
@@ -806,15 +834,16 @@ async function initGame() {
     
     const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
     
-    if (progress[config.wordLength]?.gameOver) {
+    if (progress[config.wordLength]?.[config.gameMode]?.gameOver) {
         config.gameOver = true;
         board.style.display = 'none';
-        showMessage(`Você já completou o jogo de ${config.wordLength} letras hoje!`, 'error');
+        showMessage(`Você já completou o jogo de ${config.wordLength} letras no modo ${config.gameMode === 'daily' ? 'temático' : 'aleatório'} hoje!`, 'error');
         updateCountdown();
         return;
     }
     
-    config.targetWord = getDailyWord();
+    // Escolhe a palavra alvo baseado no modo de jogo
+    config.targetWord = config.gameMode === 'daily' ? getDailyWord() : getRandomWord();
     config.currentAttempt = 0;
     config.currentGuess = [];
     config.gameOver = false;
@@ -825,7 +854,9 @@ async function initGame() {
     document.documentElement.style.setProperty('--rows', config.maxAttempts);
     document.documentElement.style.setProperty('--cols', config.wordLength);
     
-    dailyInfo.textContent = `Palavra do dia (${config.wordLength} letras) - ${formatDate(new Date())}`;
+    dailyInfo.textContent = config.gameMode === 'daily' 
+        ? `Palavra do dia (${config.wordLength} letras) - ${formatDate(new Date())}`
+        : `Modo Aleatório (${config.wordLength} letras) - ${formatDate(new Date())}`;
     
     board.innerHTML = '';
     
@@ -844,8 +875,8 @@ async function initGame() {
         board.appendChild(row);
     }
     
-    if (progress[config.wordLength]) {
-        const saved = progress[config.wordLength];
+    if (progress[config.wordLength]?.[config.gameMode]) {
+        const saved = progress[config.wordLength][config.gameMode];
         config.currentAttempt = saved.attempts?.length || 0;
         config.keyboardState = saved.keyboardState || {};
         config.gameOver = saved.gameOver || false;
@@ -867,7 +898,7 @@ async function initGame() {
         
         if (config.gameOver) {
             board.style.display = 'none';
-            showMessage(`Você já completou o jogo de ${config.wordLength} letras hoje!`, 'error');
+            showMessage(`Você já completou o jogo de ${config.wordLength} letras no modo ${config.gameMode === 'daily' ? 'temático' : 'aleatório'} hoje!`, 'error');
             updateCountdown();
         }
     }
@@ -1077,7 +1108,7 @@ function checkGuess(isUserAction = true) {
             
             board.style.display = 'none';
             setTimeout(() => {
-                showMessage(`Você já completou o jogo de ${config.wordLength} letras hoje!`, 'error');
+                showMessage(`Você já completou o jogo de ${config.wordLength} letras no modo ${config.gameMode === 'daily' ? 'temático' : 'aleatório'} hoje!`, 'error');
             }, 1500);
             
             saveProgress();
@@ -1118,6 +1149,10 @@ function checkGuess(isUserAction = true) {
 function saveProgress() {
     const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
     
+    if (!progress[config.wordLength]) {
+        progress[config.wordLength] = {};
+    }
+    
     const attempts = [];
     for (let i = 0; i < config.currentAttempt; i++) {
         const row = board.children[i];
@@ -1128,7 +1163,7 @@ function saveProgress() {
         attempts.push(word);
     }
     
-    progress[config.wordLength] = {
+    progress[config.wordLength][config.gameMode] = {
         attempts: attempts,
         keyboardState: config.keyboardState,
         gameOver: config.gameOver
@@ -1239,13 +1274,27 @@ wordLengthSelect.addEventListener('change', () => {
     const newSize = parseInt(wordLengthSelect.value);
     const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
     
-    if (progress[newSize]?.gameOver) {
-        showMessage(`Você já completou ${newSize} letras hoje! Escolha outro tamanho.`, 'error');
+    if (progress[newSize]?.[config.gameMode]?.gameOver) {
+        showMessage(`Você já completou ${newSize} letras no modo ${config.gameMode === 'daily' ? 'temático' : 'aleatório'} hoje! Escolha outro tamanho.`, 'error');
         wordLengthSelect.value = config.wordLength;
         return;
     }
     
     config.wordLength = newSize;
+    safeInitGame();
+});
+
+gameModeSelect.addEventListener('change', () => {
+    const newMode = gameModeSelect.value;
+    const progress = JSON.parse(localStorage.getItem('wordleProgress')) || {};
+    
+    if (progress[config.wordLength]?.[newMode]?.gameOver) {
+        showMessage(`Você já completou o jogo de ${config.wordLength} letras no modo ${newMode === 'daily' ? 'temático' : 'aleatório'} hoje!`, 'error');
+        gameModeSelect.value = config.gameMode;
+        return;
+    }
+    
+    config.gameMode = newMode;
     safeInitGame();
 });
 
